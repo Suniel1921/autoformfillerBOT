@@ -241,3 +241,11 @@ def fill_emergency_contact(page, data):
 if __name__ == '__main__':
     main()
 
+
+
+
+
+#     iterate all day date like today date is 23/5/2025 itereate 24 , 25, 26 27 28 29 30 31 if not found then move next month  1/6/2025 if 1 date is no availble then 2 3 4 5 6 7 8 9 10 11 .... 
+# and the main problem is how to know date if avaible if you any approach or algorigh then apply but i have and i guess(on date picker if date is availbe then its clickable) and selectedable mean if date  25/5/2025  is availble then when click on 25 then its select with bg red color and also its also show the black color hight if date is avaible
+# if not then show gray color yo can see in image also i provided image for you referacne  
+
