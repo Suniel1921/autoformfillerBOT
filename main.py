@@ -1,9 +1,10 @@
 from playwright.sync_api import sync_playwright
 import json
 import time
+from datetime import datetime
 
 def solve_captcha(page):
-    print("Please enter the captcha text manually:")
+    print("Please enter the captcha text manually (automation limited, provide text from image):")
     return input()
 
 def main():
@@ -86,25 +87,52 @@ def main():
                 
                 # Step 5: Handle agreement modal
                 print("Step 5: Agreeing to terms")
-               
-                proceed_selector = 'a:has-text("I agree स्वीकृत छ")'
-                page.click('text=' "I agree स्वीकृत छ ")
+                agree_selector = 'a:has-text("I agree स्वीकृत छ")'
+                page.wait_for_selector(agree_selector, state="visible", timeout=15000)
+                page.click(agree_selector)
+                print("Clicked 'I agree' on the modal")
                 
                 # Step 6: Fill appointment details
                 print("Step 6: Filling appointment details")
                 page.wait_for_url('https://emrtds.nepalpassport.gov.np/appointment', timeout=30000)
-                page.select_option('#mat-select-0', label=data['appointment_country'])
-                page.select_option('#mat-select-1', label=data['appointment_location'])
                 
-                # Select date (assuming format 'YYYY-MM-DD')
+                # Wait for appointment form elements
+                print("Waiting for appointment form elements")
+                page.wait_for_selector('#mat-select-0', state="visible", timeout=20000)
+                page.wait_for_selector('#mat-select-1', state="visible", timeout=20000)
+                
+                # Select appointment country as "Other"
+                print("Selecting appointment country as Other")
+                page.click('#mat-select-0')
+                page.wait_for_selector('mat-option', state="visible", timeout=10000)
+                page.click('mat-option span:text("Other")')
+                
+                # Select appointment location as "NE, Tokyo"
+                print("Selecting appointment location as NE, Tokyo")
+                page.click('#mat-select-1')
+                page.wait_for_selector('mat-option', state="visible", timeout=10000)
+                page.click('mat-option span:text("NE, Tokyo")')
+                
+                # Select date (using current date as an example)
                 print("Selecting appointment date")
                 page.click('#datePicker')
-                day = int(data['appointment_date'].split('-')[2])
-                page.click(f'text="{day}"')
+                today = datetime.now().day
+                page.click(f'text="{today}"')
                 
-                # Select time
+                # Select time (11:30 or 12:00)
                 print("Selecting appointment time")
-                page.select_option('#timeSlot', label=data['appointment_time'])
+                time_slot_selector = '#timeSlot'
+                page.wait_for_selector(time_slot_selector, state="visible", timeout=10000)
+                available_times = ["11:30", "12:00"]
+                for time_value in available_times:
+                    try:
+                        page.select_option(time_slot_selector, label=time_value)
+                        print(f"Selected time: {time_value}")
+                        break
+                    except Exception:
+                        print(f"Time {time_value} not available, trying next...")
+                else:
+                    print("Neither 11:30 nor 12:00 available, using default if any")
                 
                 # Solve captcha
                 print("Solving captcha")
@@ -124,14 +152,22 @@ def main():
                 
                 # Step 8: Save screenshot
                 print("Step 8: Taking screenshot")
-                page.screenshot(path='final_page.png')
+                try:
+                    page.screenshot(path='final_page.png', timeout=10000)
+                except Exception as e:
+                    print(f"Failed to take screenshot: {e}")
                 print("Form submission completed successfully!")
                 success = True
                 break  # Exit loop if successful
                 
             except Exception as e:
                 print(f"Error occurred: {e}")
-                page.screenshot(path='error_page.png')
+                try:
+                    page.screenshot(path='error_page.png', timeout=10000)
+                except Exception as e:
+                    print(f"Failed to take screenshot: {e}")
+                print("Page content on error:")
+                print(page.content())
                 if attempt < max_attempts - 1:
                     print("Retrying due to error...")
                     time.sleep(2)
@@ -204,3 +240,4 @@ def fill_emergency_contact(page, data):
 
 if __name__ == '__main__':
     main()
+
